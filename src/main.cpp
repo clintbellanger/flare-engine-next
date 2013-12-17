@@ -30,7 +30,7 @@ using namespace std;
 #include "GameSwitcher.h"
 #include "SharedResources.h"
 #include "UtilsFileSystem.h"
-#include "SDLRenderDevice.h"
+#include "SDL2RenderDevice.h"
 
 GameSwitcher *gswitch;
 
@@ -84,7 +84,7 @@ static void init() {
 	loadMiscSettings();
 
 	// Create render Device and Rendering Context.
-	render_device = new SDLRenderDevice();
+	render_device = new SDL2RenderDevice();
 	int status = render_device->createContext(VIEW_W, VIEW_H);
 
 	if (status == -1) {
@@ -97,7 +97,7 @@ static void init() {
 	render_device->loadIcons();
 	// Set Gamma
 	if (CHANGE_GAMMA)
-		SDL_SetGamma(GAMMA,GAMMA,GAMMA);
+		render_device->setGamma(GAMMA);
 
 	if (AUDIO && Mix_OpenAudio(22050, AUDIO_S16SYS, 2, 1024)) {
 		fprintf (stderr, "Error during Mix_OpenAudio: %s\n", SDL_GetError());

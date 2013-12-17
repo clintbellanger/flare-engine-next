@@ -39,7 +39,11 @@ InputState::InputState(void)
 	, last_button(0)
 	, scroll_up(false)
 	, scroll_down(false) {
+#if SDL_VERSION_ATLEAST(2,0,0)
+	SDL_StartTextInput();
+#else
 	SDL_EnableUNICODE(true);
+#endif
 
 	defaultQwertyKeyBindings();
 	defaultJoystickBindings();
@@ -251,6 +255,11 @@ void InputState::handle(bool dump_event) {
 		}
 
 		// grab symbol keys
+#if SDL_VERSION_ATLEAST(2,0,0)
+		if (event.type == SDL_TEXTINPUT) {
+			inkeys += event.text.text;
+		}
+#else
 		if (event.type == SDL_KEYDOWN) {
 			int ch = event.key.keysym.unicode;
 			// if it is printable char then write its utf-8 representation
@@ -258,26 +267,39 @@ void InputState::handle(bool dump_event) {
 				inkeys += (char) ((ch >> 12) | 0xe0);
 				inkeys += (char) (((ch >> 6) & 0x3f) | 0x80);
 				inkeys += (char) ((ch & 0x3f) | 0x80);
-			}
-			else if (ch >= 0x80) {
+			} else if (ch >= 0x80) {
 				inkeys += (char) ((ch >> 6) | 0xc0);
 				inkeys += (char) ((ch & 0x3f) | 0x80);
-			}
-			else if (ch >= 32 && ch != 127) {
+			} else if (ch >= 32 && ch != 127) {
 				inkeys += (char)ch;
 			}
 		}
+#endif
 
 		switch (event.type) {
 
+#if SDL_VERSION_ATLEAST(2,0,0)
+			case SDL_MOUSEWHEEL:
+				if (event.wheel.y > 0) {
+					scroll_up = true;
+				} else if (event.wheel.y < 0) {
+					scroll_down = true;
+				}
+				break;
+			case SDL_MOUSEBUTTONDOWN:
+				for (int key=0; key<key_count; key++) {
+					if (event.button.button == binding[key] || event.button.button == binding_alt[key]) {
+						pressing[key] = true;
+					}
+				}
+				break;
+#else
 			case SDL_MOUSEBUTTONDOWN:
 				if (event.button.button == SDL_BUTTON_WHEELUP) {
 					scroll_up = true;
-				}
-				else if (event.button.button == SDL_BUTTON_WHEELDOWN) {
+				} else if (event.button.button == SDL_BUTTON_WHEELDOWN) {
 					scroll_down = true;
-				}
-				else {
+				}else {
 					for (int key=0; key<key_count; key++) {
 						if (event.button.button == binding[key] || event.button.button == binding_alt[key]) {
 							pressing[key] = true;
@@ -285,6 +307,7 @@ void InputState::handle(bool dump_event) {
 					}
 				}
 				break;
+#endif
 			case SDL_MOUSEBUTTONUP:
 				for (int key=0; key<key_count; key++) {
 					if (event.button.button == binding[key] || event.button.button == binding_alt[key]) {

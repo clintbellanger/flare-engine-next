@@ -49,17 +49,21 @@ public:
 	~Image() {}
 
 	int getWidth() {
-		return (surface ? surface->w : 0);
+		int w, h;
+		SDL_QueryTexture(surface, NULL, NULL, &w, &h);
+		return (surface ? w : 0);
 	}
 	int getHeight() {
-		return (surface ? surface->h : 0);
+		int w, h;
+		SDL_QueryTexture(surface, NULL, NULL, &w, &h);
+		return (surface ? h : 0);
 	}
 	bool graphicIsNull() {
 		return surface == NULL;
 	}
 
 	// TODO Only use this in a derivative class in SDLRenderDevice
-	SDL_Surface *surface;
+	SDL_Texture *surface;
 };
 
 struct Renderable {
