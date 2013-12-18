@@ -220,7 +220,7 @@ int SDL2RenderDevice::createContext(int width, int height) {
 
 	renderer = SDL_CreateRenderer(screen, -1, flags);
 
-	if (screen == NULL && !is_initialized) {
+	if (screen == NULL && renderer == NULL && !is_initialized) {
 			// If this is the first attempt and it failed we are not
 			// getting anywhere.
 			SDL_Quit();
@@ -246,6 +246,8 @@ SDL_Rect SDL2RenderDevice::getContextSize() {
 }
 
 int SDL2RenderDevice::render(Renderable& r, SDL_Rect dest) {
+	dest.w = r.src.w;
+	dest.h = r.src.h;
 	return SDL_RenderCopy(renderer, r.sprite.surface, &r.src, &dest);
 }
 
@@ -256,6 +258,8 @@ int SDL2RenderDevice::render(ISprite& r) {
 	if ( !local_to_global(r) ) {
 		return -1;
 	}
+	m_dest.w = m_clip.w;
+	m_dest.h = m_clip.h;
 
 	return SDL_RenderCopy(renderer, r.getGraphics()->surface, &m_clip, &m_dest);
 }
@@ -267,7 +271,13 @@ int SDL2RenderDevice::renderImage(Image* image, SDL_Rect& src) {
 
 int SDL2RenderDevice::renderToImage(Image* src_image, SDL_Rect& src, Image* dest_image, SDL_Rect& dest, bool dest_is_transparent) {
 	if (!src_image || !dest_image) return -1;
-	//Unimplemented
+	if (SDL_SetRenderTarget(renderer, dest_image->surface) != 0) return -1;
+	SDL_SetTextureBlendMode(dest_image->surface, SDL_BLENDMODE_BLEND);
+	dest.w = src.w;
+	dest.h = src.h;
+	SDL_RenderCopy(renderer, src_image->surface, &src, &dest);
+	SDL_SetRenderTarget(renderer, NULL);
+	return 0;
 }
 
 int SDL2RenderDevice::renderText(
@@ -282,6 +292,8 @@ int SDL2RenderDevice::renderText(
 	m_ttf_renderable.setGraphics(ttf);
 	if (!m_ttf_renderable.graphicsIsNull()) {
 		SDL_Rect clip = m_ttf_renderable.getClip();
+		dest.w = clip.w;
+		dest.h = clip.h;
 		ret = SDL_RenderCopy(
 				  renderer,
 				  m_ttf_renderable.getGraphics()->surface,
@@ -422,6 +434,7 @@ void SDL2RenderDevice::commitFrame() {
 void SDL2RenderDevice::destroyContext() {
 	SDL_FreeSurface(titlebar_icon);
 	SDL_DestroyWindow(screen);
+	SDL_DestroyRenderer(renderer);
 
 	return;
 }
@@ -513,7 +526,7 @@ Image SDL2RenderDevice::createAlphaSurface(int width, int height) {
 
 	Image image;
 
-	image.surface = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, width, height);
+	image.surface = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_TARGET, width, height);
 	if(image.surface == NULL) {
 		fprintf(stderr, "CreateRGBSurface failed: %s\n", SDL_GetError());
 	}
@@ -525,10 +538,11 @@ Image SDL2RenderDevice::createSurface(int width, int height) {
 
 	Image image;
 
-	image.surface = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, width, height);
+	image.surface = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_TARGET, width, height);
 	if(image.surface == NULL) {
 		fprintf(stderr, "CreateRGBSurface failed: %s\n", SDL_GetError());
 	}
+	SDL_SetTextureColorMod(image.surface, 255,0,255);
 
 	return image;
 }
@@ -615,6 +629,8 @@ Image SDL2RenderDevice::loadGraphicSurface(std::string filename, std::string err
 			exit(1);
 		}
 	}
+	if (HavePinkColorKey)
+		SDL_SetTextureColorMod(image.surface, 255,0,255);
 	return image;
 }
 
