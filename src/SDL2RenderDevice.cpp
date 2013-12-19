@@ -201,7 +201,15 @@ SDL2RenderDevice::SDL2RenderDevice() {
 
 int SDL2RenderDevice::createContext(int width, int height) {
 	if (is_initialized) {
-		SDL_DestroyWindow(screen);
+		if (FULLSCREEN) {
+			SDL_SetWindowSize(screen, width, height);
+			SDL_SetWindowFullscreen(screen, SDL_WINDOW_FULLSCREEN);
+		}
+		else {
+			SDL_SetWindowFullscreen(screen, SDL_WINDOW_SHOWN);
+			SDL_SetWindowSize(screen, width, height);
+		}
+		return 0;
 	}
 
 	Uint32 flags = 0;
@@ -228,8 +236,6 @@ int SDL2RenderDevice::createContext(int width, int height) {
 	}
 	else {
 		is_initialized = true;
-		VIEW_W = width;
-		VIEW_H = height;
 	}
 
 	// Add Window Titlebar Icon
