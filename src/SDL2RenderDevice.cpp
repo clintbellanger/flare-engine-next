@@ -692,7 +692,21 @@ void SDL2RenderDevice::setAlpha(Image* image, Uint32 flag, Uint8 alpha) {
 
 Image SDL2RenderDevice::loadGraphicSurface(std::string filename, std::string errormessage, bool IfNotFoundExit, bool HavePinkColorKey) {
 	Image image;
-	image.surface = IMG_LoadTexture(renderer, mods->locate(filename).c_str());
+
+	if (HavePinkColorKey) {
+		// SDL_Textures don't support colorkeying
+		// so we instead create an SDL_Surface, key it, and convert to a texture
+		SDL_Surface* cleanup = IMG_Load(mods->locate(filename).c_str());
+		if (cleanup) {
+			SDL_SetColorKey(cleanup, true, SDL_MapRGB(cleanup->format, 255, 0, 255));
+			image.surface = SDL_CreateTextureFromSurface(renderer, cleanup);
+			SDL_FreeSurface(cleanup);
+		}
+	}
+	else {
+		image.surface = IMG_LoadTexture(renderer, mods->locate(filename).c_str());
+	}
+
 	if(image.graphicIsNull()) {
 		if (!errormessage.empty())
 			fprintf(stderr, "%s: %s\n", errormessage.c_str(), IMG_GetError());
@@ -701,8 +715,7 @@ Image SDL2RenderDevice::loadGraphicSurface(std::string filename, std::string err
 			exit(1);
 		}
 	}
-	if (HavePinkColorKey)
-		SDL_SetTextureColorMod(image.surface, 255,0,255);
+
 	return image;
 }
 
