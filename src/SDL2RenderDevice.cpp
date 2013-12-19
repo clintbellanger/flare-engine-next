@@ -212,7 +212,7 @@ int SDL2RenderDevice::createContext(int width, int height) {
 	screen = SDL_CreateWindow(msg->get(WINDOW_TITLE).c_str(),
 								SDL_WINDOWPOS_CENTERED,
 								SDL_WINDOWPOS_CENTERED,
-								VIEW_W, VIEW_H,
+								width, height,
 								flags);
 
 	if (HWSURFACE) flags = SDL_RENDERER_ACCELERATED;
@@ -228,6 +228,8 @@ int SDL2RenderDevice::createContext(int width, int height) {
 	}
 	else {
 		is_initialized = true;
+		VIEW_W = width;
+		VIEW_H = height;
 	}
 
 	// Add Window Titlebar Icon

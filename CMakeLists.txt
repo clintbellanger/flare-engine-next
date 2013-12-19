@@ -4,6 +4,10 @@ cmake_minimum_required (VERSION 2.6)
 Set (PACKAGE "FLARE")
 Set (VERSION "0.19")
 
+option(USE_SDL2 "USE_SDL2" OFF)
+if (USE_SDL2)
+	add_definitions(-DUSE_SDL2)
+endif (USE_SDL2)
 
 # Default definitions
 if (NOT MSVC)
@@ -54,38 +58,60 @@ EndIf(NOT IS_ABSOLUTE "${DATADIR}")
 
 # Detect missing dependencies
 
-Find_Package (SDL REQUIRED)
-If (NOT SDL_FOUND)
-  Message (FATAL_ERROR "Couldn't find SDL development files. On Debian-based systems (such as Ubuntu) you should install the 'libsdl1.2-dev' package.")
-Else (NOT SDL_FOUND)
-  Include_Directories (${SDL_INCLUDE_DIR})
-EndIf (NOT SDL_FOUND)
+If (USE_SDL2)
+	Include(FindPkgConfig)
+	PKG_SEARCH_MODULE(SDL2 REQUIRED sdl2)
+	INCLUDE_DIRECTORIES(${SDL2_INCLUDE_DIRS})
+	PKG_SEARCH_MODULE(SDL2IMAGE REQUIRED SDL2_image)
+	INCLUDE_DIRECTORIES(${SDL2IMAGE_INCLUDE_DIRS})
+	PKG_SEARCH_MODULE(SDL2MIXER REQUIRED SDL2_mixer)
+	INCLUDE_DIRECTORIES(${SDL2MIXER_INCLUDE_DIRS})
+	PKG_SEARCH_MODULE(SDL2TTF REQUIRED SDL2_ttf)
+	INCLUDE_DIRECTORIES(${SDL2TTF_INCLUDE_DIRS})
+Else (USE_SDL2)
+	Find_Package (SDL REQUIRED)
+	If (NOT SDL_FOUND)
+	  Message (FATAL_ERROR "Couldn't find SDL development files. On Debian-based systems (such as Ubuntu) you should install the 'libsdl1.2-dev' package.")
+	Else (NOT SDL_FOUND)
+	  Include_Directories (${SDL_INCLUDE_DIR})
+	EndIf (NOT SDL_FOUND)
 
-Find_Package (SDL_mixer REQUIRED)
-If (NOT SDLMIXER_FOUND)
-  Message (FATAL_ERROR "Couldn't find SDL-mixer development files. On Debian-based systems (such as Ubuntu) you should install the 'libsdl-mixer1.2-dev' package.")
-Else (NOT SDLMIXER_FOUND)
-  Include_Directories (${SDLMIXER_INCLUDE_DIR})
-EndIf (NOT SDLMIXER_FOUND)
+	Find_Package (SDL_mixer REQUIRED)
+	If (NOT SDLMIXER_FOUND)
+	  Message (FATAL_ERROR "Couldn't find SDL-mixer development files. On Debian-based systems (such as Ubuntu) you should install the 'libsdl-mixer1.2-dev' package.")
+	Else (NOT SDLMIXER_FOUND)
+	  Include_Directories (${SDLMIXER_INCLUDE_DIR})
+	EndIf (NOT SDLMIXER_FOUND)
 
-Find_Package (SDL_image REQUIRED)
-If (NOT SDLIMAGE_FOUND)
-  Message (FATAL_ERROR "Couldn't find SDL-image development files. On Debian-based systems (such as Ubuntu) you should install the 'libsdl-image1.2-dev' package.")
-Else (NOT SDLIMAGE_FOUND)
-  Include_Directories (${SDLIMAGE_INCLUDE_DIR})
-EndIf (NOT SDLIMAGE_FOUND)
+	Find_Package (SDL_image REQUIRED)
+	If (NOT SDLIMAGE_FOUND)
+	  Message (FATAL_ERROR "Couldn't find SDL-image development files. On Debian-based systems (such as Ubuntu) you should install the 'libsdl-image1.2-dev' package.")
+	Else (NOT SDLIMAGE_FOUND)
+	  Include_Directories (${SDLIMAGE_INCLUDE_DIR})
+	EndIf (NOT SDLIMAGE_FOUND)
 
-Find_Package (SDL_ttf REQUIRED)
-If (NOT SDLTTF_FOUND)
-  Message (FATAL_ERROR "Couldn't find SDL-ttf development files. On Debian-based systems (such as Ubuntu) you should install the 'libsdl-ttf2.0-dev' package.")
-Else (NOT SDLTTF_FOUND)
-  Include_Directories (${SDLTTF_INCLUDE_DIR})
-EndIf (NOT SDLTTF_FOUND)
+	Find_Package (SDL_ttf REQUIRED)
+	If (NOT SDLTTF_FOUND)
+	  Message (FATAL_ERROR "Couldn't find SDL-ttf development files. On Debian-based systems (such as Ubuntu) you should install the 'libsdl-ttf2.0-dev' package.")
+	Else (NOT SDLTTF_FOUND)
+	  Include_Directories (${SDLTTF_INCLUDE_DIR})
+	EndIf (NOT SDLTTF_FOUND)
+EndIf (USE_SDL2)
 
 
 # Sources
 
+if (USE_SDL2)
+	Set (FLARE_SOURCES ./src/SDL2RenderDevice.cpp)
+else (USE_SDL2)
+	Set (FLARE_SOURCES
+		./src/SDL_gfxBlitFunc.c
+		./src/SDLRenderDevice.cpp
+	)
+endif(USE_SDL2)
+
 Set (FLARE_SOURCES
+	${FLARE_SOURCES}
 	./src/BehaviorAlly.cpp
 	./src/Entity.cpp
 	./src/Animation.cpp
@@ -152,7 +178,6 @@ Set (FLARE_SOURCES
 	./src/QuestLog.cpp
 	./src/SaveLoad.cpp
 	./src/Settings.cpp
-	./src/SDL2RenderDevice.cpp
 	./src/SharedGameResources.cpp
 	./src/SharedResources.cpp
 	./src/StatBlock.cpp
@@ -194,7 +219,12 @@ If (NOT SDLMAIN_LIBRARY)
   Set (SDLMAIN_LIBRARY "")
 EndIf (NOT SDLMAIN_LIBRARY)
 
-Target_Link_Libraries (flare ${CMAKE_LD_FLAGS} ${SDL_LIBRARY} ${SDLMIXER_LIBRARY} ${SDLIMAGE_LIBRARY} ${SDLTTF_LIBRARY} ${SDLMAIN_LIBRARY})
+If (USE_SDL2)
+	Target_Link_Libraries (flare ${CMAKE_LD_FLAGS} ${SDL2_LIBRARIES} ${SDL2IMAGE_LIBRARIES} ${SDL2MIXER_LIBRARIES} ${SDL2TTF_LIBRARIES})
+Else (USE_SDL2)
+	Target_Link_Libraries (flare ${CMAKE_LD_FLAGS} ${SDL_LIBRARY} ${SDLMIXER_LIBRARY} ${SDLIMAGE_LIBRARY} ${SDLTTF_LIBRARY} ${SDLMAIN_LIBRARY})
+EndIF (USE_SDL2)
+
 
 
 # installing to the proper places

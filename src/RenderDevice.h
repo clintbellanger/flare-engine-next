@@ -41,6 +41,7 @@ FLARE.  If not, see http://www.gnu.org/licenses/
  *
  */
 
+#ifdef USE_SDL2
 class Image {
 public:
 	Image()
@@ -65,6 +66,28 @@ public:
 	// TODO Only use this in a derivative class in SDLRenderDevice
 	SDL_Texture *surface;
 };
+#else
+class Image {
+public:
+	Image()
+		: surface(NULL)
+	{}
+	~Image() {}
+
+	int getWidth() {
+		return (surface ? surface->w : 0);
+	}
+	int getHeight() {
+		return (surface ? surface->h : 0);
+	}
+	bool graphicIsNull() {
+		return surface == NULL;
+	}
+
+	// TODO Only use this in a derivative class in SDLRenderDevice
+	SDL_Surface *surface;
+};
+#endif
 
 struct Renderable {
 public:
