@@ -443,32 +443,83 @@ void SDL2RenderDevice::destroyContext() {
 
 void SDL2RenderDevice::fillImageWithColor(Image *dst, SDL_Rect *dstrect, Uint32 color) {
 	if (!dst) return;
-	//Unimplemented
-	SDL_UpdateTexture(dst->surface, dstrect, NULL, NULL);
+
+	Uint32 u_format = SDL_GetWindowPixelFormat(screen);
+	SDL_PixelFormat* format = SDL_AllocFormat(u_format);
+
+	if (!format) return;
+
+	SDL_Color rgb;
+	SDL_GetRGB(color, format, &rgb.r, &rgb.g, &rgb.b);
+	SDL_FreeFormat(format);
+
+	SDL_SetRenderTarget(renderer, dst->surface);
+	SDL_SetTextureBlendMode(dst->surface, SDL_BLENDMODE_BLEND);
+	SDL_SetRenderDrawColor(renderer, rgb.r, rgb.g , rgb.b, 255);
+	SDL_RenderClear(renderer);
+	SDL_SetRenderTarget(renderer, NULL);
 }
 
 Uint32 SDL2RenderDevice::MapRGB(Image *src, Uint8 r, Uint8 g, Uint8 b) {
 	if (!src || !src->surface) return 0;
-	//Unimplemented
-	return 0;
+
+	Uint32 u_format;
+	SDL_QueryTexture(src->surface, &u_format, NULL, NULL, NULL);
+	SDL_PixelFormat* format = SDL_AllocFormat(u_format);
+
+	if (format) {
+		Uint32 ret = SDL_MapRGB(format, r, g, b);
+		SDL_FreeFormat(format);
+		return ret;
+	}
+	else {
+		return 0;
+	}
 }
 
 Uint32 SDL2RenderDevice::MapRGB(Uint8 r, Uint8 g, Uint8 b) {
 	Uint32 u_format = SDL_GetWindowPixelFormat(screen);
 	SDL_PixelFormat* format = SDL_AllocFormat(u_format);
-	return SDL_MapRGB(format, r, g, b);
+
+	if (format) {
+		Uint32 ret = SDL_MapRGB(format, r, g, b);
+		SDL_FreeFormat(format);
+		return ret;
+	}
+	else {
+		return 0;
+	}
 }
 
 Uint32 SDL2RenderDevice::MapRGBA(Image *src, Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
 	if (!src || !src->surface) return 0;
-	//Unimplemented
-	return 0;
+
+	Uint32 u_format;
+	SDL_QueryTexture(src->surface, &u_format, NULL, NULL, NULL);
+	SDL_PixelFormat* format = SDL_AllocFormat(u_format);
+
+	if (format) {
+		Uint32 ret = SDL_MapRGBA(format, r, g, b, a);
+		SDL_FreeFormat(format);
+		return ret;
+	}
+	else {
+		return 0;
+	}
 }
 
 Uint32 SDL2RenderDevice::MapRGBA(Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
 	Uint32 u_format = SDL_GetWindowPixelFormat(screen);
 	SDL_PixelFormat* format = SDL_AllocFormat(u_format);
-	return SDL_MapRGBA(format, r, g, b, a);
+
+	if (format) {
+		Uint32 ret = SDL_MapRGBA(format, r, g, b, a);
+		SDL_FreeFormat(format);
+		return ret;
+	}
+	else {
+		return 0;
+	}
 }
 
 void SDL2RenderDevice::loadIcons() {
@@ -528,9 +579,18 @@ Image SDL2RenderDevice::createAlphaSurface(int width, int height) {
 
 	Image image;
 
-	image.surface = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_TARGET, width, height);
-	if(image.surface == NULL) {
-		fprintf(stderr, "CreateRGBSurface failed: %s\n", SDL_GetError());
+	if (width > 0 && height > 0) {
+		image.surface = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_TARGET, width, height);
+		if(image.surface == NULL) {
+			fprintf(stderr, "CreateRGBSurface failed: %s\n", SDL_GetError());
+		}
+		else {
+				SDL_SetRenderTarget(renderer, image.surface);
+				SDL_SetTextureBlendMode(image.surface, SDL_BLENDMODE_BLEND);
+				SDL_SetRenderDrawColor(renderer, 0,0,0,0);
+				SDL_RenderClear(renderer);
+				SDL_SetRenderTarget(renderer, NULL);
+		}
 	}
 
 	return image;
@@ -540,11 +600,15 @@ Image SDL2RenderDevice::createSurface(int width, int height) {
 
 	Image image;
 
-	image.surface = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_TARGET, width, height);
-	if(image.surface == NULL) {
-		fprintf(stderr, "CreateRGBSurface failed: %s\n", SDL_GetError());
+	if (width > 0 && height > 0) {
+		image.surface = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_TARGET, width, height);
+		if(image.surface == NULL) {
+			fprintf(stderr, "CreateRGBSurface failed: %s\n", SDL_GetError());
+		}
+		else {
+			SDL_SetTextureColorMod(image.surface, 255,0,255);
+		}
 	}
-	SDL_SetTextureColorMod(image.surface, 255,0,255);
 
 	return image;
 }
