@@ -660,7 +660,9 @@ Image SDL2RenderDevice::createSurface(int width, int height) {
 }
 
 void SDL2RenderDevice::setGamma(float g) {
-	//Unimplemented
+	Uint16 ramp[256];
+	SDL_CalculateGammaRamp(g, ramp);
+	SDL_SetWindowGammaRamp(screen, ramp, ramp, ramp);
 }
 
 void SDL2RenderDevice::listModes(std::vector<SDL_Rect> &modes) {
