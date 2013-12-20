@@ -330,15 +330,40 @@ void SDL2RenderDevice::drawPixel(
 	int y,
 	Uint32 color
 ) {
-	//Unimplemented
-	return;
+	Uint32 u_format = SDL_GetWindowPixelFormat(screen);
+	SDL_PixelFormat* format = SDL_AllocFormat(u_format);
+
+	if (!format) return;
+
+	SDL_Color rgba;
+	SDL_GetRGBA(color, format, &rgba.r, &rgba.g, &rgba.b, &rgba.a);
+	SDL_FreeFormat(format);
+
+	SDL_SetRenderDrawColor(renderer, rgba.r, rgba.g, rgba.b, rgba.a);
+	SDL_RenderDrawPoint(renderer, x, y);
 }
 
 /*
  * Set the pixel at (x, y) to the given value
  */
 void SDL2RenderDevice::drawPixel(Image *image, int x, int y, Uint32 pixel) {
-	//Unimplemented
+	if (!image || !image->surface) return;
+
+	Uint32 u_format;
+	SDL_QueryTexture(image->surface, &u_format, NULL, NULL, NULL);
+	SDL_PixelFormat* format = SDL_AllocFormat(u_format);
+
+	if (!format) return;
+
+	SDL_Color rgba;
+	SDL_GetRGBA(pixel, format, &rgba.r, &rgba.g, &rgba.b, &rgba.a);
+	SDL_FreeFormat(format);
+
+	SDL_SetRenderTarget(renderer, image->surface);
+	SDL_SetTextureBlendMode(image->surface, SDL_BLENDMODE_BLEND);
+	SDL_SetRenderDrawColor(renderer, rgba.r, rgba.g, rgba.b, rgba.a);
+	SDL_RenderDrawPoint(renderer, x, y);
+	SDL_SetRenderTarget(renderer, NULL);
 }
 
 void SDL2RenderDevice::drawLine(
@@ -348,29 +373,17 @@ void SDL2RenderDevice::drawLine(
 	int y1,
 	Uint32 color
 ) {
-	const int dx = abs(x1-x0);
-	const int dy = abs(y1-y0);
-	const int sx = x0 < x1 ? 1 : -1;
-	const int sy = y0 < y1 ? 1 : -1;
-	int err = dx-dy;
+	Uint32 u_format = SDL_GetWindowPixelFormat(screen);
+	SDL_PixelFormat* format = SDL_AllocFormat(u_format);
 
-	do {
-		//skip draw if outside screen
-		if (x0 > 0 && y0 > 0 && x0 < VIEW_W && y0 < VIEW_H) {
-			this->drawPixel(x0,y0,color);
-		}
+	if (!format) return;
 
-		int e2 = 2*err;
-		if (e2 > -dy) {
-			err = err - dy;
-			x0 = x0 + sx;
-		}
-		if (e2 <  dx) {
-			err = err + dx;
-			y0 = y0 + sy;
-		}
-	}
-	while(x0 != x1 || y0 != y1);
+	SDL_Color rgba;
+	SDL_GetRGBA(color, format, &rgba.r, &rgba.g, &rgba.b, &rgba.a);
+	SDL_FreeFormat(format);
+
+	SDL_SetRenderDrawColor(renderer, rgba.r, rgba.g, rgba.b, rgba.a);
+	SDL_RenderDrawLine(renderer, x0, y0, x1, y1);
 }
 
 void SDL2RenderDevice::drawLine(
@@ -378,7 +391,7 @@ void SDL2RenderDevice::drawLine(
 	const Point& p1,
 	Uint32 color
 ) {
-	//Unimplemented
+	drawLine(p0.x, p0.y, p1.x, p1.y, color);
 }
 
 /**
@@ -387,37 +400,32 @@ void SDL2RenderDevice::drawLine(
 void SDL2RenderDevice::drawLine(Image *image, int x0, int y0, int x1, int y1, Uint32 color) {
 	if (!image || !image->surface) return;
 
-	const int dx = abs(x1-x0);
-	const int dy = abs(y1-y0);
-	const int sx = x0 < x1 ? 1 : -1;
-	const int sy = y0 < y1 ? 1 : -1;
-	int err = dx-dy;
+	Uint32 u_format;
+	SDL_QueryTexture(image->surface, &u_format, NULL, NULL, NULL);
+	SDL_PixelFormat* format = SDL_AllocFormat(u_format);
 
-	do {
-		//skip draw if outside screen
-		if (x0 > 0 && y0 > 0 && x0 < VIEW_W && y0 < VIEW_H)
-			render_device->drawPixel(image,x0,y0,color);
+	if (!format) return;
 
-		int e2 = 2*err;
-		if (e2 > -dy) {
-			err = err - dy;
-			x0 = x0 + sx;
-		}
-		if (e2 <  dx) {
-			err = err + dx;
-			y0 = y0 + sy;
-		}
-	}
-	while(x0 != x1 || y0 != y1);
+	SDL_Color rgba;
+	SDL_GetRGBA(color, format, &rgba.r, &rgba.g, &rgba.b, &rgba.a);
+	SDL_FreeFormat(format);
+
+	SDL_SetRenderTarget(renderer, image->surface);
+	SDL_SetTextureBlendMode(image->surface, SDL_BLENDMODE_BLEND);
+	SDL_SetRenderDrawColor(renderer, rgba.r, rgba.g, rgba.b, rgba.a);
+	SDL_RenderDrawLine(renderer, x0, y0, x1, y1);
+	SDL_SetRenderTarget(renderer, NULL);
 }
 
 void SDL2RenderDevice::drawLine(Image *image, Point pos0, Point pos1, Uint32 color) {
-	if (!image || !image->surface) return;
-	//Unimplemented
+	drawLine(image, pos0.x, pos0.y, pos1.x, pos1.y, color);
 }
 
 void SDL2RenderDevice::drawRectangle(Image *image, Point pos0, Point pos1, Uint32 color) {
-	//Unimplemented
+	drawLine(image, pos0.x, pos0.y, pos1.x, pos0.y, color);
+	drawLine(image, pos1.x, pos0.y, pos1.x, pos1.y, color);
+	drawLine(image, pos0.x, pos0.y, pos0.x, pos1.y, color);
+	drawLine(image, pos0.x, pos1.y, pos1.x, pos1.y, color);
 }
 
 void SDL2RenderDevice::drawRectangle(
@@ -425,7 +433,10 @@ void SDL2RenderDevice::drawRectangle(
 	const Point& p1,
 	Uint32 color
 ) {
-	//Unimplemented
+	drawLine(p0.x, p0.y, p1.x, p0.y, color);
+	drawLine(p1.x, p0.y, p1.x, p1.y, color);
+	drawLine(p0.x, p0.y, p0.x, p1.y, color);
+	drawLine(p0.x, p1.y, p1.x, p1.y, color);
 }
 
 void SDL2RenderDevice::blankScreen() {
@@ -450,18 +461,19 @@ void SDL2RenderDevice::destroyContext() {
 void SDL2RenderDevice::fillImageWithColor(Image *dst, SDL_Rect *dstrect, Uint32 color) {
 	if (!dst) return;
 
-	Uint32 u_format = SDL_GetWindowPixelFormat(screen);
+	Uint32 u_format;
+	SDL_QueryTexture(dst->surface, &u_format, NULL, NULL, NULL);
 	SDL_PixelFormat* format = SDL_AllocFormat(u_format);
 
 	if (!format) return;
 
-	SDL_Color rgb;
-	SDL_GetRGB(color, format, &rgb.r, &rgb.g, &rgb.b);
+	SDL_Color rgba;
+	SDL_GetRGBA(color, format, &rgba.r, &rgba.g, &rgba.b, &rgba.a);
 	SDL_FreeFormat(format);
 
 	SDL_SetRenderTarget(renderer, dst->surface);
 	SDL_SetTextureBlendMode(dst->surface, SDL_BLENDMODE_BLEND);
-	SDL_SetRenderDrawColor(renderer, rgb.r, rgb.g , rgb.b, 255);
+	SDL_SetRenderDrawColor(renderer, rgba.r, rgba.g , rgba.b, rgba.a);
 	SDL_RenderClear(renderer);
 	SDL_SetRenderTarget(renderer, NULL);
 }
@@ -603,20 +615,7 @@ Image SDL2RenderDevice::createAlphaSurface(int width, int height) {
 }
 
 Image SDL2RenderDevice::createSurface(int width, int height) {
-
-	Image image;
-
-	if (width > 0 && height > 0) {
-		image.surface = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_TARGET, width, height);
-		if(image.surface == NULL) {
-			fprintf(stderr, "CreateRGBSurface failed: %s\n", SDL_GetError());
-		}
-		else {
-			SDL_SetTextureColorMod(image.surface, 255,0,255);
-		}
-	}
-
-	return image;
+	return createAlphaSurface(width, height);
 }
 
 void SDL2RenderDevice::setGamma(float g) {
@@ -686,8 +685,7 @@ void SDL2RenderDevice::setColorKey(Image* image, Uint32 flag, Uint32 key) {
 }
 
 void SDL2RenderDevice::setAlpha(Image* image, Uint32 flag, Uint8 alpha) {
-	if (!image) return;
-	SDL_SetTextureAlphaMod(image->surface, alpha);
+	//Unimplemented
 }
 
 Image SDL2RenderDevice::loadGraphicSurface(std::string filename, std::string errormessage, bool IfNotFoundExit, bool HavePinkColorKey) {
