@@ -752,7 +752,19 @@ Image SDL2RenderDevice::loadGraphicSurface(std::string filename, std::string err
 }
 
 void SDL2RenderDevice::scaleSurface(Image *source, int width, int height) {
-	//Unimplemented
+	if (!source || !source->surface) return;
+
+	Image dest = createAlphaSurface(width, height);
+	if (dest.surface) {
+		// copy the source texture to the new texture, stretching it in the process
+		SDL_SetRenderTarget(renderer, dest.surface);
+		SDL_RenderCopyEx(renderer, source->surface, NULL, NULL, 0, NULL, SDL_FLIP_NONE);
+		SDL_SetRenderTarget(renderer, NULL);
+
+		// Remove the old surface
+		SDL_DestroyTexture(source->surface);
+		source->surface = dest.surface;
+	}
 }
 
 Uint32 SDL2RenderDevice::readPixel(Image *image, int x, int y) {
