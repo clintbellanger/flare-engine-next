@@ -35,24 +35,30 @@ Sprite::Sprite(const Sprite& other)
 	offset = other.offset;
 	dest = other.dest;
 
-	if (other.sprite.surface != NULL) {
-		//sprite.surface = SDL_DisplayFormatAlpha(other.sprite.surface);
+	// Warning: because SDL_Texture can't be duplicated without the assistance of
+	// a renderer context, we'll only copy the pointer here if keep_graphics is on.
+	// The texture must be freed with clearGraphics() later if that is the case.
+	if (keep_graphics) {
+		sprite.surface = other.sprite.surface;
 	} else {
 		sprite.surface = NULL;
 	}
 }
 
 Sprite& Sprite::operator=(const Sprite& other) {
-	if (other.sprite.surface != NULL) {
-		//sprite.surface = SDL_DisplayFormatAlpha(other.sprite.surface);
-	} else {
-		sprite.surface = NULL;
-	}
 	local_frame = other.local_frame;
 	keep_graphics = other.keep_graphics;
 	src = other.src;
 	offset = other.offset;
 	dest = other.dest;
+
+	// copy texture pointer
+	if (keep_graphics) {
+		sprite.surface = other.sprite.surface;
+	}
+	else {
+		sprite.surface = NULL;
+	}
 
 	return *this;
 }
