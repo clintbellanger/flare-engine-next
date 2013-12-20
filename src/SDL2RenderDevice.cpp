@@ -272,6 +272,20 @@ int SDL2RenderDevice::render(ISprite& r) {
 	if ( !local_to_global(r) ) {
 		return -1;
 	}
+
+	// negative x and y clip causes weird stretching
+	// adjust for that here
+	if (m_clip.x < 0) {
+		m_clip.w -= abs(m_clip.x);
+		m_dest.x += abs(m_clip.x);
+		m_clip.x = 0;
+	}
+	if (m_clip.y < 0) {
+		m_clip.h -= abs(m_clip.y);
+		m_dest.y += abs(m_clip.y);
+		m_clip.y = 0;
+	}
+
 	m_dest.w = m_clip.w;
 	m_dest.h = m_clip.h;
 
@@ -280,7 +294,28 @@ int SDL2RenderDevice::render(ISprite& r) {
 
 int SDL2RenderDevice::renderImage(Image* image, SDL_Rect& src) {
 	if (!image) return -1;
-	return SDL_RenderCopy(renderer, image->surface, &src, 0);
+
+	SDL_Rect dest;
+	dest.x = 0;
+	dest.y = 0;
+
+	// negative x and y clip causes weird stretching
+	// adjust for that here
+	if (src.x < 0) {
+		src.w -= abs(src.x);
+		dest.x += abs(src.x);
+		src.x = 0;
+	}
+	if (src.y < 0) {
+		src.h -= abs(src.y);
+		dest.y += abs(src.y);
+		src.y = 0;
+	}
+
+	dest.w = src.w;
+	dest.h = src.h;
+
+	return SDL_RenderCopy(renderer, image->surface, &src, &dest);
 }
 
 int SDL2RenderDevice::renderToImage(Image* src_image, SDL_Rect& src, Image* dest_image, SDL_Rect& dest, bool dest_is_transparent) {
