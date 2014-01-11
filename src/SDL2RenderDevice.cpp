@@ -27,44 +27,40 @@ FLARE.  If not, see http://www.gnu.org/licenses/
 
 using namespace std;
 
-Sprite::Sprite(const Sprite& other)
-{
+Sprite::Sprite(const Sprite& other) {
 	local_frame = other.local_frame;
-	keep_graphics = other.keep_graphics;
 	src = other.src;
 	offset = other.offset;
 	dest = other.dest;
 
-	// Warning: because SDL_Texture can't be duplicated without the assistance of
-	// a renderer context, we'll only copy the pointer here if keep_graphics is on.
-	// The texture must be freed with clearGraphics() later if that is the case.
-	if (keep_graphics) {
-		sprite.surface = other.sprite.surface;
-	} else {
-		sprite.surface = NULL;
+	// Warning: Some graphics APIs don't support deep copying image data
+	// So we'll make sure image data is deleted here
+	if (sprite.surface != NULL) {
+		SDL_DestroyTexture(sprite.surface);
+		fprintf(stderr, "Warning: Copying Sprite object is not supported\n");
 	}
+	sprite.surface = NULL;
 }
 
 Sprite& Sprite::operator=(const Sprite& other) {
 	local_frame = other.local_frame;
-	keep_graphics = other.keep_graphics;
 	src = other.src;
 	offset = other.offset;
 	dest = other.dest;
 
-	// copy texture pointer
-	if (keep_graphics) {
-		sprite.surface = other.sprite.surface;
+	// Warning: Some graphics APIs don't support deep copying image data
+	// So we'll make sure image data is deleted here
+	if (sprite.surface != NULL) {
+		SDL_DestroyTexture(sprite.surface);
+		fprintf(stderr, "Warning: Assignment operator for Sprite object is not supported\n");
 	}
-	else {
-		sprite.surface = NULL;
-	}
+	sprite.surface = NULL;
 
 	return *this;
 }
 
 Sprite::~Sprite() {
-	if (sprite.surface != NULL && !keep_graphics) {
+	if (sprite.surface != NULL) {
 		SDL_DestroyTexture(sprite.surface);
 		sprite.surface = NULL;
 	}
@@ -201,27 +197,33 @@ int Sprite::getGraphicsHeight() {
 	return (sprite.surface ? sprite.getHeight() : 0);
 }
 
-SDL2RenderDevice::SDL2RenderDevice() {
+SDL2RenderDevice::SDL2RenderDevice()
+	: screen(NULL)
+	, titlebar_icon(NULL) {
 	cout << "Using Render Device: SDL2RenderDevice" << endl;
 }
 
 int SDL2RenderDevice::createContext(int width, int height) {
 	if (is_initialized) {
-		if (FULLSCREEN) {
-			SDL_SetWindowSize(screen, width, height);
+		SDL_SetWindowSize(screen, width, height);
+		SDL_DestroyRenderer(renderer);
+		Uint32 flags = 0;
+		if (HWSURFACE) flags = SDL_RENDERER_ACCELERATED | SDL_RENDERER_TARGETTEXTURE;
+		else flags = SDL_RENDERER_SOFTWARE | SDL_RENDERER_TARGETTEXTURE;
+
+		renderer = SDL_CreateRenderer(screen, -1, flags);
+
+		if (FULLSCREEN) 
 			SDL_SetWindowFullscreen(screen, SDL_WINDOW_FULLSCREEN);
-		}
-		else {
-			SDL_SetWindowFullscreen(screen, SDL_WINDOW_SHOWN);
-			SDL_SetWindowSize(screen, width, height);
-		}
+		else
+			SDL_SetWindowFullscreen(screen, 0);
 		return 0;
 	}
 
 	Uint32 flags = 0;
 
-	if (FULLSCREEN) flags = SDL_WINDOW_FULLSCREEN;
-	else flags = SDL_WINDOW_SHOWN;
+	if (FULLSCREEN) flags = SDL_WINDOW_FULLSCREEN | SDL_WINDOW_RESIZABLE;
+	else flags = SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE;
 
 	screen = SDL_CreateWindow(msg->get(WINDOW_TITLE).c_str(),
 								SDL_WINDOWPOS_CENTERED,
@@ -229,8 +231,8 @@ int SDL2RenderDevice::createContext(int width, int height) {
 								width, height,
 								flags);
 
-	if (HWSURFACE) flags = SDL_RENDERER_ACCELERATED;
-	else flags = SDL_RENDERER_SOFTWARE;
+	if (HWSURFACE) flags = SDL_RENDERER_ACCELERATED | SDL_RENDERER_TARGETTEXTURE;
+	else flags = SDL_RENDERER_SOFTWARE | SDL_RENDERER_TARGETTEXTURE;
 
 	renderer = SDL_CreateRenderer(screen, -1, flags);
 
@@ -350,6 +352,8 @@ int SDL2RenderDevice::renderText(
 				  &dest
 			  );
 		SDL_DestroyTexture(m_ttf_renderable.getGraphics()->surface);
+		ttf.surface = NULL;
+		m_ttf_renderable.setGraphics(ttf);
 	}
 	else {
 		ret = -1;
