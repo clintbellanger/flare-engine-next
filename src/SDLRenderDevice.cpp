@@ -29,42 +29,40 @@ FLARE.  If not, see http://www.gnu.org/licenses/
 
 using namespace std;
 
-Sprite::Sprite(const Sprite& other)
-{
+Sprite::Sprite(const Sprite& other) {
 	local_frame = other.local_frame;
-	keep_graphics = other.keep_graphics;
 	src = other.src;
 	offset = other.offset;
 	dest = other.dest;
 
-	// Warning: Sprites flagged with keep_graphics will need to have their surfaces
-	// freed with clearGraphics() when they are no longer needed.
-	if (keep_graphics) {
-		sprite.surface = other.sprite.surface;
-	} else {
-		sprite.surface = NULL;
+	// Warning: Some graphics APIs don't support deep copying image data
+	// So we'll make sure image data is deleted here
+	if (sprite.surface != NULL) {
+		SDL_FreeSurface(sprite.surface);
+		fprintf(stderr, "Warning: Copying Sprite object is not supported\n");
 	}
+	sprite.surface = NULL;
 }
 
 Sprite& Sprite::operator=(const Sprite& other) {
 	local_frame = other.local_frame;
-	keep_graphics = other.keep_graphics;
 	src = other.src;
 	offset = other.offset;
 	dest = other.dest;
 
-	// copy surface pointer
-	if (keep_graphics) {
-		sprite.surface = other.sprite.surface;
-	} else {
-		sprite.surface = NULL;
+	// Warning: Some graphics APIs don't support deep copying image data
+	// So we'll make sure image data is deleted here
+	if (sprite.surface != NULL) {
+		SDL_FreeSurface(sprite.surface);
+		fprintf(stderr, "Warning: Assignment operator for Sprite object is not supported\n");
 	}
+	sprite.surface = NULL;
 
 	return *this;
 }
 
 Sprite::~Sprite() {
-	if (sprite.surface != NULL && !keep_graphics) {
+	if (sprite.surface != NULL) {
 		SDL_FreeSurface(sprite.surface);
 		sprite.surface = NULL;
 	}
@@ -201,7 +199,9 @@ int Sprite::getGraphicsHeight() {
 	return (sprite.surface ? sprite.getHeight() : 0);
 }
 
-SDLRenderDevice::SDLRenderDevice() {
+SDLRenderDevice::SDLRenderDevice()
+	: screen(NULL)
+	, titlebar_icon(NULL) {
 	cout << "Using Render Device: SDLRenderDevice" << endl;
 }
 
@@ -297,6 +297,8 @@ int SDLRenderDevice::renderText(
 				  &dest
 			  );
 		SDL_FreeSurface(m_ttf_renderable.getGraphics()->surface);
+		ttf.surface = NULL;
+		m_ttf_renderable.setGraphics(ttf);
 	}
 	else {
 		ret = -1;
@@ -729,7 +731,6 @@ void SDLRenderDevice::scaleSurface(Image *source, int width, int height) {
 	if(!source || !width || !height)
 		return;
 
-	double _stretch_factor_x, _stretch_factor_y;
 	Image ret;
 	ret.surface = SDL_CreateRGBSurface(source->surface->flags, width, height,
 						source->surface->format->BitsPerPixel,
@@ -739,6 +740,7 @@ void SDLRenderDevice::scaleSurface(Image *source, int width, int height) {
 						source->surface->format->Amask);
 
 	if (ret.surface) {
+		double _stretch_factor_x, _stretch_factor_y;
 		_stretch_factor_x = width / (double)source->surface->w;
 		_stretch_factor_y = height / (double)source->surface->h;
 

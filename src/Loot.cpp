@@ -26,6 +26,7 @@ Loot::Loot() {
 	pos.y = 0;
 	animation = NULL;
 	tip.clear();
+	dropped_by_hero = false;
 	gfx = "";
 }
 
@@ -37,6 +38,7 @@ Loot::Loot(const Loot &other) {
 	loadAnimation(other.gfx);
 	animation->syncTo(other.animation);
 	tip = other.tip;
+	dropped_by_hero = other.dropped_by_hero;
 }
 
 // The assignment operator mainly used in internal vector managing,
@@ -45,16 +47,18 @@ Loot& Loot::operator= (const Loot &other) {
 	if (gfx != "")
 		anim->decreaseCount(gfx);
 	delete animation;
+	animation = 0;
 
 	loadAnimation(other.gfx);
-	animation->syncTo(other.animation);
+	if (animation)
+		animation->syncTo(other.animation);
 
 	stack.item = other.stack.item;
 	stack.quantity = other.stack.quantity;
 	pos.x = other.pos.x;
 	pos.y = other.pos.y;
 	tip = other.tip;
-
+	dropped_by_hero = other.dropped_by_hero;
 	return *this;
 }
 
@@ -64,6 +68,8 @@ void Loot::loadAnimation(std::string _gfx) {
 		anim->increaseCount(gfx);
 		AnimationSet *as = anim->getAnimationSet(gfx);
 		animation = as->getAnimation();
+	} else {
+		animation = 0;
 	}
 }
 

@@ -158,7 +158,7 @@ GameStateLoad::GameStateLoad() : GameState() {
 
 	// get displayable types list
 	bool found_layer = false;
-	if (infile.open("engine/hero_options.txt", true, false)) {
+	if (infile.open("engine/hero_layers.txt")) {
 		while(infile.next()) {
 			infile.val = infile.val + ',';
 
@@ -237,7 +237,7 @@ void GameStateLoad::readGameSlots() {
 
 string GameStateLoad::getMapName(const string& map_filename) {
 	FileParser infile;
-	if (!infile.open("maps/" + map_filename, true, true, "")) return "";
+	if (!infile.open(map_filename, true, true, "")) return "";
 	string map_name = "";
 
 	while (map_name == "" && infile.next()) {
@@ -342,25 +342,23 @@ void GameStateLoad::loadPreview(int slot) {
 	}
 
 	// composite the hero graphic
+	sprites[slot].resize(img_gfx.size());
 	for (unsigned int i=0; i<img_gfx.size(); i++) {
 		if (img_gfx[i] == "")
 			continue;
 
-		sprites[slot].push_back(Sprite());
-
 		if (!TEXTURE_QUALITY) {
 			string fname = "images/avatar/" + stats[slot].gfx_base + "/preview/noalpha/" + img_gfx[i] + ".png";
-			sprites[slot].back().setGraphics(
+			sprites[slot][i].setGraphics(
 				render_device->loadGraphicSurface(fname, "Falling back to alpha version", false, true)
 			);
 		}
-		if (sprites[slot].back().graphicsIsNull()) {
-			sprites[slot].back().setGraphics(
+		if (sprites[slot][i].graphicsIsNull()) {
+			sprites[slot][i].setGraphics(
 				render_device->loadGraphicSurface("images/avatar/" + stats[slot].gfx_base + "/preview/" + img_gfx[i] + ".png")
 			);
 		}
-		sprites[slot].back().setClip(0,0,sprites[slot].back().getGraphicsWidth(),sprites[slot].back().getGraphicsHeight());
-		sprites[slot].back().keep_graphics = true;
+		sprites[slot][i].setClip(0,0,sprites[slot][i].getGraphicsWidth(),sprites[slot][i].getGraphicsHeight());
 	}
 
 }
