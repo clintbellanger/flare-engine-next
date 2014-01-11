@@ -213,7 +213,7 @@ int SDL2RenderDevice::createContext(int width, int height) {
 
 		renderer = SDL_CreateRenderer(screen, -1, flags);
 
-		if (FULLSCREEN) 
+		if (FULLSCREEN)
 			SDL_SetWindowFullscreen(screen, SDL_WINDOW_FULLSCREEN);
 		else
 			SDL_SetWindowFullscreen(screen, 0);
@@ -339,7 +339,14 @@ int SDL2RenderDevice::renderText(
 ) {
 	int ret = 0;
 	Image ttf;
-	ttf.surface = SDL_CreateTextureFromSurface(renderer,TTF_RenderUTF8_Blended(ttf_font, text.c_str(), color));
+	SDL_Surface *cleanup = TTF_RenderUTF8_Blended(ttf_font, text.c_str(), color);
+	if (cleanup) {
+		ttf.surface = SDL_CreateTextureFromSurface(renderer,cleanup);
+		SDL_FreeSurface(cleanup);
+	}
+	else {
+		return -1;
+	}
 	m_ttf_renderable.setGraphics(ttf);
 	if (!m_ttf_renderable.graphicsIsNull()) {
 		SDL_Rect clip = m_ttf_renderable.getClip();
@@ -364,10 +371,20 @@ int SDL2RenderDevice::renderText(
 
 void SDL2RenderDevice::renderTextToImage(Image* image, TTF_Font* ttf_font, const std::string& text, SDL_Color color, bool blended) {
 	if (!image) return;
-	if (blended)
-		image->surface = SDL_CreateTextureFromSurface(renderer, TTF_RenderUTF8_Blended(ttf_font, text.c_str(), color));
-	else
-		image->surface = SDL_CreateTextureFromSurface(renderer, TTF_RenderUTF8_Solid(ttf_font, text.c_str(), color));
+
+	SDL_Surface *cleanup;
+
+	if (blended) {
+		cleanup = TTF_RenderUTF8_Blended(ttf_font, text.c_str(), color);
+	}
+	else {
+		cleanup = TTF_RenderUTF8_Solid(ttf_font, text.c_str(), color);
+	}
+
+	if (cleanup) {
+		image->surface = SDL_CreateTextureFromSurface(renderer, cleanup);
+		SDL_FreeSurface(cleanup);
+	}
 }
 
 void SDL2RenderDevice::drawPixel(
