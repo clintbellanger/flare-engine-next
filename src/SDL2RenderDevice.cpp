@@ -205,8 +205,8 @@ SDL2RenderDevice::SDL2RenderDevice()
 
 int SDL2RenderDevice::createContext(int width, int height) {
 	if (is_initialized) {
-		SDL_SetWindowSize(screen, width, height);
 		SDL_DestroyRenderer(renderer);
+		SDL_SetWindowSize(screen, width, height);
 		Uint32 flags = 0;
 		if (HWSURFACE) flags = SDL_RENDERER_ACCELERATED | SDL_RENDERER_TARGETTEXTURE;
 		else flags = SDL_RENDERER_SOFTWARE | SDL_RENDERER_TARGETTEXTURE;
@@ -234,7 +234,7 @@ int SDL2RenderDevice::createContext(int width, int height) {
 	if (HWSURFACE) flags = SDL_RENDERER_ACCELERATED | SDL_RENDERER_TARGETTEXTURE;
 	else flags = SDL_RENDERER_SOFTWARE | SDL_RENDERER_TARGETTEXTURE;
 
-	renderer = SDL_CreateRenderer(screen, -1, flags);
+	if (screen != NULL) renderer = SDL_CreateRenderer(screen, -1, flags);
 
 	if (screen == NULL && renderer == NULL && !is_initialized) {
 			// If this is the first attempt and it failed we are not
@@ -513,9 +513,11 @@ void SDL2RenderDevice::commitFrame() {
 }
 
 void SDL2RenderDevice::destroyContext() {
+	m_ttf_renderable.clearGraphics();
+	icons.clearGraphics();
 	SDL_FreeSurface(titlebar_icon);
-	SDL_DestroyWindow(screen);
 	SDL_DestroyRenderer(renderer);
+	SDL_DestroyWindow(screen);
 
 	return;
 }
