@@ -1310,56 +1310,48 @@ void GameStateConfig::scanKey(int button) {
 }
 
 void GameStateConfig::cleanup() {
+	background.clearGraphics();
+
 	tip_buf.clear();
-	if (tip != NULL)
-	{
+	if (tip != NULL) {
 		delete tip;
 		tip = NULL;
 	}
-	if (tabControl != NULL)
-	{
+	if (tabControl != NULL) {
 		delete tabControl;
 		tabControl = NULL;
 	}
-	if (ok_button != NULL)
-	{
+	if (ok_button != NULL) {
 		delete ok_button;
 		ok_button = NULL;
 	}
-	if (defaults_button != NULL)
-	{
+	if (defaults_button != NULL) {
 		delete defaults_button;
 		defaults_button = NULL;
 	}
-	if (cancel_button != NULL)
-	{
+	if (cancel_button != NULL) {
 		delete cancel_button;
 		cancel_button = NULL;
 	}
-	if (input_scrollbox != NULL)
-	{
+	if (input_scrollbox != NULL) {
 		delete input_scrollbox;
 		input_scrollbox = NULL;
 	}
-	if (input_confirm != NULL)
-	{
+	if (input_confirm != NULL) {
 		delete input_confirm;
 		input_confirm = NULL;
 	}
-	if (defaults_confirm != NULL)
-	{
+	if (defaults_confirm != NULL) {
 		delete defaults_confirm;
 		defaults_confirm = NULL;
 	}
-	if (resolution_confirm != NULL)
-	{
+	if (resolution_confirm != NULL) {
 		delete resolution_confirm;
 		resolution_confirm = NULL;
 	}
 
 	for (std::vector<Widget*>::iterator iter = child_widget.begin(); iter != child_widget.end(); ++iter) {
-		if (*iter != NULL)
-		{
+		if (*iter != NULL) {
 			delete (*iter);
 			*iter = NULL;
 		}
@@ -1367,15 +1359,13 @@ void GameStateConfig::cleanup() {
 	child_widget.clear();
 
 	for (unsigned int i = 0; i < 29; i++) {
-		if (settings_lb[i] != NULL)
-		{
+		if (settings_lb[i] != NULL) {
 			delete settings_lb[i];
 			settings_lb[i] = NULL;
 		}
 	}
 	for (unsigned int i = 0; i < 58; i++) {
-		if (settings_key[i] != NULL)
-		{
+		if (settings_key[i] != NULL) {
 			delete settings_key[i];
 			settings_key[i] = NULL;
 		}
