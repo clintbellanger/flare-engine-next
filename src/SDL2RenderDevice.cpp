@@ -38,6 +38,7 @@ Sprite::Sprite(const Sprite& other) {
 	if (sprite.surface != NULL) {
 		SDL_DestroyTexture(sprite.surface);
 		fprintf(stderr, "Warning: Copying Sprite object is not supported\n");
+		textures_count-=1;
 	}
 	sprite.surface = NULL;
 }
@@ -53,6 +54,7 @@ Sprite& Sprite::operator=(const Sprite& other) {
 	if (sprite.surface != NULL) {
 		SDL_DestroyTexture(sprite.surface);
 		fprintf(stderr, "Warning: Assignment operator for Sprite object is not supported\n");
+		textures_count-=1;
 	}
 	sprite.surface = NULL;
 
@@ -62,6 +64,7 @@ Sprite& Sprite::operator=(const Sprite& other) {
 Sprite::~Sprite() {
 	if (sprite.surface != NULL) {
 		SDL_DestroyTexture(sprite.surface);
+		textures_count-=1;
 		sprite.surface = NULL;
 	}
 }
@@ -108,6 +111,7 @@ void Sprite::clearGraphics() {
 
 	if (sprite.surface != NULL) {
 		SDL_DestroyTexture(sprite.surface);
+		textures_count-=1;
 		sprite.surface = NULL;
 	}
 }
@@ -201,11 +205,15 @@ SDL2RenderDevice::SDL2RenderDevice()
 	: screen(NULL)
 	, titlebar_icon(NULL) {
 	cout << "Using Render Device: SDL2RenderDevice" << endl;
+	textures_count = 0;
 }
 
 int SDL2RenderDevice::createContext(int width, int height) {
 	if (is_initialized) {
 		icons.clearGraphics();
+		cout << "Trying to change video mode. Number of not freed textures:" << textures_count << endl;
+		if (textures_count != 0)
+			cout << "This can cause graphical issues or even game exit" << endl;
 		SDL_DestroyRenderer(renderer);
 		SDL_SetWindowSize(screen, width, height);
 		Uint32 flags = 0;
@@ -345,6 +353,7 @@ int SDL2RenderDevice::renderText(
 	SDL_Surface *cleanup = TTF_RenderUTF8_Blended(ttf_font, text.c_str(), color);
 	if (cleanup) {
 		ttf.surface = SDL_CreateTextureFromSurface(renderer,cleanup);
+		textures_count+=1;
 		SDL_FreeSurface(cleanup);
 	}
 	else {
@@ -362,6 +371,7 @@ int SDL2RenderDevice::renderText(
 				  &dest
 			  );
 		SDL_DestroyTexture(m_ttf_renderable.getGraphics()->surface);
+		textures_count-=1;
 		ttf.surface = NULL;
 		m_ttf_renderable.setGraphics(ttf);
 	}
@@ -386,6 +396,7 @@ void SDL2RenderDevice::renderTextToImage(Image* image, TTF_Font* ttf_font, const
 
 	if (cleanup) {
 		image->surface = SDL_CreateTextureFromSurface(renderer, cleanup);
+		textures_count+=1;
 		SDL_FreeSurface(cleanup);
 	}
 }
@@ -666,6 +677,7 @@ Image SDL2RenderDevice::createAlphaSurface(int width, int height) {
 
 	if (width > 0 && height > 0) {
 		image.surface = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_TARGET, width, height);
+		textures_count+=1;
 		if(image.surface == NULL) {
 			fprintf(stderr, "CreateRGBSurface failed: %s\n", SDL_GetError());
 		}
@@ -758,11 +770,13 @@ Image SDL2RenderDevice::loadGraphicSurface(std::string filename, std::string err
 		if (cleanup) {
 			SDL_SetColorKey(cleanup, true, SDL_MapRGB(cleanup->format, 255, 0, 255));
 			image.surface = SDL_CreateTextureFromSurface(renderer, cleanup);
+			textures_count+=1;
 			SDL_FreeSurface(cleanup);
 		}
 	}
 	else {
 		image.surface = IMG_LoadTexture(renderer, mods->locate(filename).c_str());
+		textures_count+=1;
 	}
 
 	if(image.graphicIsNull()) {
@@ -789,6 +803,7 @@ void SDL2RenderDevice::scaleSurface(Image *source, int width, int height) {
 
 		// Remove the old surface
 		SDL_DestroyTexture(source->surface);
+		textures_count-=1;
 		source->surface = dest.surface;
 	}
 }
@@ -808,7 +823,10 @@ bool SDL2RenderDevice::checkPixel(Point px, Image *image) {
 
 void SDL2RenderDevice::freeImage(Image *image) {
 	if (image && image->surface)
+	{
 		SDL_DestroyTexture(image->surface);
+		textures_count-=1;
+	}
 }
 
 void setSDL_RGBA(Uint32 *rmask, Uint32 *gmask, Uint32 *bmask, Uint32 *amask) {

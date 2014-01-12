@@ -38,4 +38,5 @@ CombatText *comb;
 SoundManager *snd;
 SDL_Joystick *joy;
 Sprite icons;
+int textures_count;
 RenderDevice *render_device;
