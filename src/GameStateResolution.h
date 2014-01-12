@@ -34,6 +34,9 @@ private:
 	int old_w;
 	int old_h;
 	bool old_fs;
+	int new_w;
+	int new_h;
+	bool initialized;
 
 public:
 	GameStateResolution(int width, int height, bool fullscreen);
