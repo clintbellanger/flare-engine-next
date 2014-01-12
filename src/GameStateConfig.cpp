@@ -777,10 +777,13 @@ void GameStateConfig::logic () {
 			requestedGameState = new GameStateTitle();
 		}
 		else if (resolution_confirm->cancelClicked || resolution_confirm_ticks == 0) {
+			cleanup();
 			applyVideoSettings(old_view_w, old_view_h);
 			saveSettings();
 			delete requestedGameState;
 			requestedGameState = new GameStateConfig();
+			// FIXME Can we do this safely?
+			return;
 		}
 	}
 
@@ -805,8 +808,13 @@ void GameStateConfig::logic () {
 				SDL_JoystickClose(joy);
 				joy = SDL_JoystickOpen(JOYSTICK_DEVICE);
 			}
+			cleanup();
 			applyVideoSettings(width, height);
 			if (width != old_view_w || height != old_view_h) {
+				// FIXME Avoid using any of textures after we call cleanup() on SDL2
+				delete requestedGameState;
+				requestedGameState = new GameStateTitle();
+				return;
 				resolution_confirm->window_area = menuConfirm_area;
 				resolution_confirm->align();
 				resolution_confirm->update();
@@ -816,6 +824,8 @@ void GameStateConfig::logic () {
 				saveSettings();
 				delete requestedGameState;
 				requestedGameState = new GameStateTitle();
+				// FIXME Can we do this safely?
+				return;
 			}
 		}
 		else if (defaults_button->checkClick()) {
@@ -1044,6 +1054,8 @@ void GameStateConfig::logic () {
 }
 
 void GameStateConfig::render () {
+	if (requestedGameState != NULL)
+		return;
 	if (resolution_confirm->visible) {
 		resolution_confirm->render();
 		return;
@@ -1207,7 +1219,8 @@ bool GameStateConfig::applyVideoSettings(int width, int height) {
 		VIEW_H = height;
 		VIEW_H_HALF = height/2;
 
-		resolution_confirm->visible = true;
+		// FIXME Avoid using resolution_confirm after we call cleanup() on SDL2
+		//resolution_confirm->visible = true;
 
 		return true;
 	}
@@ -1296,33 +1309,84 @@ void GameStateConfig::scanKey(int button) {
 	}
 }
 
-GameStateConfig::~GameStateConfig() {
+void GameStateConfig::cleanup() {
 	tip_buf.clear();
-	delete tip;
-	delete tabControl;
-	delete ok_button;
-	delete defaults_button;
-	delete cancel_button;
-	delete input_scrollbox;
-	delete input_confirm;
-	delete defaults_confirm;
-	delete resolution_confirm;
+	if (tip != NULL)
+	{
+		delete tip;
+		tip = NULL;
+	}
+	if (tabControl != NULL)
+	{
+		delete tabControl;
+		tabControl = NULL;
+	}
+	if (ok_button != NULL)
+	{
+		delete ok_button;
+		ok_button = NULL;
+	}
+	if (defaults_button != NULL)
+	{
+		delete defaults_button;
+		defaults_button = NULL;
+	}
+	if (cancel_button != NULL)
+	{
+		delete cancel_button;
+		cancel_button = NULL;
+	}
+	if (input_scrollbox != NULL)
+	{
+		delete input_scrollbox;
+		input_scrollbox = NULL;
+	}
+	if (input_confirm != NULL)
+	{
+		delete input_confirm;
+		input_confirm = NULL;
+	}
+	if (defaults_confirm != NULL)
+	{
+		delete defaults_confirm;
+		defaults_confirm = NULL;
+	}
+	if (resolution_confirm != NULL)
+	{
+		delete resolution_confirm;
+		resolution_confirm = NULL;
+	}
 
 	for (std::vector<Widget*>::iterator iter = child_widget.begin(); iter != child_widget.end(); ++iter) {
-		delete (*iter);
+		if (*iter != NULL)
+		{
+			delete (*iter);
+			*iter = NULL;
+		}
 	}
 	child_widget.clear();
 
 	for (unsigned int i = 0; i < 29; i++) {
-		delete settings_lb[i];
+		if (settings_lb[i] != NULL)
+		{
+			delete settings_lb[i];
+			settings_lb[i] = NULL;
+		}
 	}
 	for (unsigned int i = 0; i < 58; i++) {
-		delete settings_key[i];
+		if (settings_key[i] != NULL)
+		{
+			delete settings_key[i];
+			settings_key[i] = NULL;
+		}
 	}
 
 	language_ISO.clear();
 	language_full.clear();
+}
 
+GameStateConfig::~GameStateConfig() {
+	cleanup();
 }
 
 void GameStateConfig::placeLabeledCheckbox( WidgetLabel* lb, WidgetCheckBox* cb, int x1, int y1, int x2, int y2, std::string const& str, int tab ) {

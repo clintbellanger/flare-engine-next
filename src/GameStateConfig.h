@@ -67,6 +67,7 @@ private:
 	bool getLanguagesList(void);
 	int getLanguagesNumber(void);
 	void init();
+	void cleanup();
 	void readConfig();
 	void update();
 	void setDefaultResolution();
