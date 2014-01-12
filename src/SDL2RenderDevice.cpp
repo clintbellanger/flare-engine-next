@@ -205,6 +205,7 @@ SDL2RenderDevice::SDL2RenderDevice()
 
 int SDL2RenderDevice::createContext(int width, int height) {
 	if (is_initialized) {
+		icons.clearGraphics();
 		SDL_DestroyRenderer(renderer);
 		SDL_SetWindowSize(screen, width, height);
 		Uint32 flags = 0;
@@ -217,6 +218,7 @@ int SDL2RenderDevice::createContext(int width, int height) {
 			SDL_SetWindowFullscreen(screen, SDL_WINDOW_FULLSCREEN);
 		else
 			SDL_SetWindowFullscreen(screen, 0);
+		loadIcons();
 		return 0;
 	}
 
@@ -249,6 +251,7 @@ int SDL2RenderDevice::createContext(int width, int height) {
 	// Add Window Titlebar Icon
 	titlebar_icon = IMG_Load(mods->locate("images/logo/icon.png").c_str());
 	SDL_SetWindowIcon(screen, titlebar_icon);
+	loadIcons();
 
 	return (screen != NULL ? 0 : -1);
 }
