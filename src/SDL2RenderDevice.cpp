@@ -740,12 +740,12 @@ void SDL2RenderDevice::listModes(std::vector<SDL_Rect> &modes) {
 		fprintf(stderr, "No modes available!\n");
 		return;
 	}
- 
+
 	// Check if our resolution is restricted
 	if (detect_modes == (SDL_Rect**)-1) {
 		fprintf(stderr, "All resolutions available.\n");
 	}
- 
+
 	for (unsigned i=0; detect_modes[i]; ++i) {
 		modes.push_back(*detect_modes[i]);
 		if (detect_modes[i]->w < MIN_VIEW_W || detect_modes[i]->h < MIN_VIEW_H) {
@@ -753,15 +753,17 @@ void SDL2RenderDevice::listModes(std::vector<SDL_Rect> &modes) {
 			modes.pop_back();
 		}
 		else {
-		// check previous resolutions for duplicates. If one is found, drop the one we just added
-		for (unsigned j=0; j<modes.size()-1; ++j) {
-			if (modes[j].w == detect_modes[i]->w && modes[j].h == detect_modes[i]->h) {
-				modes.pop_back();
-				break;
+			// check previous resolutions for duplicates. If one is found, drop the one we just added
+			for (unsigned j=0; j<modes.size()-1; ++j) {
+				if (modes[j].w == detect_modes[i]->w && modes[j].h == detect_modes[i]->h) {
+					modes.pop_back();
+					break;
+				}
 			}
 		}
-		}
 	}
+	if (detect_modes)
+		free(detect_modes);
 }
 
 Image SDL2RenderDevice::loadGraphicSurface(std::string filename, std::string errormessage, bool IfNotFoundExit, bool HavePinkColorKey) {
