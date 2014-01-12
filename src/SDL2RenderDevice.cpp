@@ -211,21 +211,25 @@ SDL2RenderDevice::SDL2RenderDevice()
 int SDL2RenderDevice::createContext(int width, int height) {
 	if (is_initialized) {
 		icons.clearGraphics();
-		cout << "Trying to change video mode. Number of not freed textures:" << textures_count << endl;
-		if (textures_count != 0)
+		if (textures_count != 0) {
+			cout << "Trying to change video mode. Number of not freed textures:" << textures_count << endl;
 			cout << "This can cause graphical issues or even game exit" << endl;
+		}
 		SDL_DestroyRenderer(renderer);
-		SDL_SetWindowSize(screen, width, height);
 		Uint32 flags = 0;
 		if (HWSURFACE) flags = SDL_RENDERER_ACCELERATED | SDL_RENDERER_TARGETTEXTURE;
 		else flags = SDL_RENDERER_SOFTWARE | SDL_RENDERER_TARGETTEXTURE;
 
 		renderer = SDL_CreateRenderer(screen, -1, flags);
 
-		if (FULLSCREEN)
+		if (FULLSCREEN) {
+			SDL_SetWindowSize(screen, width, height);
 			SDL_SetWindowFullscreen(screen, SDL_WINDOW_FULLSCREEN);
-		else
+		}
+		else {
 			SDL_SetWindowFullscreen(screen, 0);
+			SDL_SetWindowSize(screen, width, height);
+		}
 		loadIcons();
 		return 0;
 	}
