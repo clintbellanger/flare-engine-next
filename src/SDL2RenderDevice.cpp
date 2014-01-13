@@ -222,8 +222,6 @@ int SDL2RenderDevice::createContext(int width, int height) {
 		if (HWSURFACE) flags = SDL_RENDERER_ACCELERATED | SDL_RENDERER_TARGETTEXTURE;
 		else flags = SDL_RENDERER_SOFTWARE | SDL_RENDERER_TARGETTEXTURE;
 
-		renderer = SDL_CreateRenderer(screen, -1, flags);
-
 		if (FULLSCREEN) {
 			SDL_SetWindowSize(screen, width, height);
 			set_fullscreen = SDL_SetWindowFullscreen(screen, SDL_WINDOW_FULLSCREEN);
@@ -232,6 +230,9 @@ int SDL2RenderDevice::createContext(int width, int height) {
 			set_fullscreen = SDL_SetWindowFullscreen(screen, 0);
 			SDL_SetWindowSize(screen, width, height);
 		}
+
+		renderer = SDL_CreateRenderer(screen, -1, flags);
+
 	}
 	else {
 		Uint32 flags = 0;
@@ -265,6 +266,7 @@ int SDL2RenderDevice::createContext(int width, int height) {
 		return (set_fullscreen == 0 ? 0 : -1);
 	}
 	else {
+		fprintf(stderr, "createContext() failed: %s\n", SDL_GetError());
 		SDL_Quit();
 		exit(1);
 	}
