@@ -209,6 +209,8 @@ SDL2RenderDevice::SDL2RenderDevice()
 }
 
 int SDL2RenderDevice::createContext(int width, int height) {
+	int set_fullscreen = 0;
+
 	if (is_initialized) {
 		icons.clearGraphics();
 		if (textures_count != 0) {
@@ -224,48 +226,49 @@ int SDL2RenderDevice::createContext(int width, int height) {
 
 		if (FULLSCREEN) {
 			SDL_SetWindowSize(screen, width, height);
-			SDL_SetWindowFullscreen(screen, SDL_WINDOW_FULLSCREEN);
+			set_fullscreen = SDL_SetWindowFullscreen(screen, SDL_WINDOW_FULLSCREEN);
 		}
 		else {
-			SDL_SetWindowFullscreen(screen, 0);
+			set_fullscreen = SDL_SetWindowFullscreen(screen, 0);
 			SDL_SetWindowSize(screen, width, height);
 		}
-		loadIcons();
-		return 0;
-	}
-
-	Uint32 flags = 0;
-
-	if (FULLSCREEN) flags = SDL_WINDOW_FULLSCREEN | SDL_WINDOW_RESIZABLE;
-	else flags = SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE;
-
-	screen = SDL_CreateWindow(msg->get(WINDOW_TITLE).c_str(),
-								SDL_WINDOWPOS_CENTERED,
-								SDL_WINDOWPOS_CENTERED,
-								width, height,
-								flags);
-
-	if (HWSURFACE) flags = SDL_RENDERER_ACCELERATED | SDL_RENDERER_TARGETTEXTURE;
-	else flags = SDL_RENDERER_SOFTWARE | SDL_RENDERER_TARGETTEXTURE;
-
-	if (screen != NULL) renderer = SDL_CreateRenderer(screen, -1, flags);
-
-	if (screen == NULL && renderer == NULL && !is_initialized) {
-			// If this is the first attempt and it failed we are not
-			// getting anywhere.
-			SDL_Quit();
-			exit(1);
 	}
 	else {
-		is_initialized = true;
+		Uint32 flags = 0;
+
+		if (FULLSCREEN) flags = SDL_WINDOW_FULLSCREEN | SDL_WINDOW_RESIZABLE;
+		else flags = SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE;
+
+		screen = SDL_CreateWindow(msg->get(WINDOW_TITLE).c_str(),
+									SDL_WINDOWPOS_CENTERED,
+									SDL_WINDOWPOS_CENTERED,
+									width, height,
+									flags);
+
+		if (HWSURFACE) flags = SDL_RENDERER_ACCELERATED | SDL_RENDERER_TARGETTEXTURE;
+		else flags = SDL_RENDERER_SOFTWARE | SDL_RENDERER_TARGETTEXTURE;
+
+		if (screen != NULL) renderer = SDL_CreateRenderer(screen, -1, flags);
 	}
 
-	// Add Window Titlebar Icon
-	titlebar_icon = IMG_Load(mods->locate("images/logo/icon.png").c_str());
-	SDL_SetWindowIcon(screen, titlebar_icon);
-	loadIcons();
+	if (screen != NULL && renderer != NULL) {
+		is_initialized = true;
 
-	return (screen != NULL ? 0 : -1);
+		// Add Window Titlebar Icon
+		if (titlebar_icon == NULL) {
+			titlebar_icon = IMG_Load(mods->locate("images/logo/icon.png").c_str());
+			SDL_SetWindowIcon(screen, titlebar_icon);
+		}
+
+		loadIcons();
+
+		return (set_fullscreen == 0 ? 0 : -1);
+	}
+	else {
+		SDL_Quit();
+		exit(1);
+		return -1;
+	}
 }
 
 SDL_Rect SDL2RenderDevice::getContextSize() {
