@@ -219,17 +219,19 @@ int SDL2RenderDevice::createContext(int width, int height) {
 		}
 		SDL_DestroyRenderer(renderer);
 		Uint32 flags = 0;
+
+		if (FULLSCREEN) flags = SDL_WINDOW_FULLSCREEN | SDL_WINDOW_RESIZABLE;
+		else flags = SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE;
+
+		SDL_DestroyWindow(screen);
+		screen = SDL_CreateWindow(msg->get(WINDOW_TITLE).c_str(),
+									SDL_WINDOWPOS_CENTERED,
+									SDL_WINDOWPOS_CENTERED,
+									width, height,
+									flags);
+
 		if (HWSURFACE) flags = SDL_RENDERER_ACCELERATED | SDL_RENDERER_TARGETTEXTURE;
 		else flags = SDL_RENDERER_SOFTWARE | SDL_RENDERER_TARGETTEXTURE;
-
-		if (FULLSCREEN) {
-			SDL_SetWindowSize(screen, width, height);
-			set_fullscreen = SDL_SetWindowFullscreen(screen, SDL_WINDOW_FULLSCREEN);
-		}
-		else {
-			set_fullscreen = SDL_SetWindowFullscreen(screen, 0);
-			SDL_SetWindowSize(screen, width, height);
-		}
 
 		renderer = SDL_CreateRenderer(screen, -1, flags);
 
