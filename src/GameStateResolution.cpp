@@ -45,7 +45,7 @@ void GameStateResolution::logic() {
 
 		// Apply the new resolution
 		// if it fails, don't create the dialog box (this will make the game continue straight to the title screen)
-		if (((old_w != new_w && old_h != new_h) || FULLSCREEN != old_fs) && applyVideoSettings(new_w, new_h))
+		if ((!(old_w == new_w && old_h == new_h) || FULLSCREEN != old_fs) && applyVideoSettings(new_w, new_h))
 			confirm = new MenuConfirm(msg->get("OK"),msg->get("Use this resolution?"));
 
 		if (confirm) {
