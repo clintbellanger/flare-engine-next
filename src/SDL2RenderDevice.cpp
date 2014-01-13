@@ -233,6 +233,8 @@ int SDL2RenderDevice::createContext(int width, int height) {
 		if (HWSURFACE) flags = SDL_RENDERER_ACCELERATED | SDL_RENDERER_TARGETTEXTURE;
 		else flags = SDL_RENDERER_SOFTWARE | SDL_RENDERER_TARGETTEXTURE;
 
+		if (DOUBLEBUF) flags = flags | SDL_RENDERER_PRESENTVSYNC;
+
 		renderer = SDL_CreateRenderer(screen, -1, flags);
 
 	}
@@ -250,6 +252,8 @@ int SDL2RenderDevice::createContext(int width, int height) {
 
 		if (HWSURFACE) flags = SDL_RENDERER_ACCELERATED | SDL_RENDERER_TARGETTEXTURE;
 		else flags = SDL_RENDERER_SOFTWARE | SDL_RENDERER_TARGETTEXTURE;
+
+		if (DOUBLEBUF) flags = flags | SDL_RENDERER_PRESENTVSYNC;
 
 		if (screen != NULL) renderer = SDL_CreateRenderer(screen, -1, flags);
 	}
