@@ -25,14 +25,16 @@ FLARE.  If not, see http://www.gnu.org/licenses/
 #include "SharedResources.h"
 #include "UtilsParsing.h"
 
-GameStateResolution::GameStateResolution(int width, int height, bool fullscreen)
+GameStateResolution::GameStateResolution(int width, int height, bool fullscreen, bool hwsurface, bool doublebuf)
 	: GameState()
 	, confirm(NULL)
 	, confirm_align("")
 	, confirm_ticks(0)
 	, old_w(VIEW_W)
 	, old_h(VIEW_H)
-	, old_fs(fullscreen)
+	, old_fullscreen(fullscreen)
+	, old_hwsurface(hwsurface)
+	, old_doublebuf(doublebuf)
 	, new_w(width)
 	, new_h(height)
 	, initialized(false)
@@ -45,7 +47,7 @@ void GameStateResolution::logic() {
 
 		// Apply the new resolution
 		// if it fails, don't create the dialog box (this will make the game continue straight to the title screen)
-		if ((!(old_w == new_w && old_h == new_h) || FULLSCREEN != old_fs) && applyVideoSettings(new_w, new_h))
+		if (compareVideoSettings() && applyVideoSettings(new_w, new_h))
 			confirm = new MenuConfirm(msg->get("OK"),msg->get("Use this resolution?"));
 
 		if (confirm) {
@@ -104,7 +106,9 @@ void GameStateResolution::logic() {
 		}
 		else if (confirm->cancelClicked || confirm_ticks == 0) {
 			cleanup();
-			FULLSCREEN = old_fs;
+			FULLSCREEN = old_fullscreen;
+			HWSURFACE = old_hwsurface;
+			DOUBLEBUF = old_doublebuf;
 			if (applyVideoSettings(old_w, old_h)) {
 				saveSettings();
 			}
@@ -153,6 +157,17 @@ bool GameStateResolution::applyVideoSettings(int width, int height) {
 
 		return true;
 	}
+}
+
+/**
+ * Checks if the video settings have changed
+ * Returns true if they have, otherwise returns false
+ */
+bool GameStateResolution::compareVideoSettings() {
+	return (!(old_w == new_w && old_h == new_h) ||
+			 FULLSCREEN != old_fullscreen ||
+			 HWSURFACE != old_hwsurface ||
+			 DOUBLEBUF != old_doublebuf);
 }
 
 void GameStateResolution::cleanup() {

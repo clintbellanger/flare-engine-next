@@ -210,6 +210,9 @@ void GameStateConfig::init() {
 	optiontab[child_widget.size()-1] = 5;
 
 	fullscreen = FULLSCREEN;
+	hwsurface = HWSURFACE;
+	doublebuf = DOUBLEBUF;
+
 	input_confirm_ticks = 0;
 
 	// Set up tab list
@@ -783,7 +786,7 @@ void GameStateConfig::logic () {
 			cleanup();
 			saveSettings();
 			delete requestedGameState;
-			requestedGameState = new GameStateResolution(width, height, fullscreen);
+			requestedGameState = new GameStateResolution(width, height, fullscreen, hwsurface, doublebuf);
 			// FIXME Can we do this safely?
 			return;
 		}

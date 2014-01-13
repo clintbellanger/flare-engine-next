@@ -159,6 +159,8 @@ private:
 	SDL_Color scrollpane_color;
 	int scrollpane_contents;
 	bool fullscreen;
+	bool hwsurface;
+	bool doublebuf;
 	int input_confirm_ticks;
 };
 

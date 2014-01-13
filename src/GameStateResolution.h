@@ -26,6 +26,7 @@ class MenuConfirm;
 class GameStateResolution : public GameState {
 private:
 	bool applyVideoSettings(int width, int height);
+	bool compareVideoSettings();
 	void cleanup();
 	MenuConfirm *confirm;
 	SDL_Rect confirm_area;
@@ -33,13 +34,15 @@ private:
 	int confirm_ticks;
 	int old_w;
 	int old_h;
-	bool old_fs;
+	bool old_fullscreen;
+	bool old_hwsurface;
+	bool old_doublebuf;
 	int new_w;
 	int new_h;
 	bool initialized;
 
 public:
-	GameStateResolution(int width, int height, bool fullscreen);
+	GameStateResolution(int width, int height, bool fullscreen, bool hwsurface, bool doublebuf);
 	~GameStateResolution();
 	void logic();
 	void render();
