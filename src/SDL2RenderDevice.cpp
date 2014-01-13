@@ -267,7 +267,6 @@ int SDL2RenderDevice::createContext(int width, int height) {
 	else {
 		SDL_Quit();
 		exit(1);
-		return -1;
 	}
 }
 
