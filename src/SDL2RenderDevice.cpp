@@ -29,44 +29,23 @@ using namespace std;
 
 Sprite::Sprite(const Sprite& other) {
 	local_frame = other.local_frame;
+	sprite = other.sprite;
 	src = other.src;
 	offset = other.offset;
 	dest = other.dest;
-
-	// Warning: Some graphics APIs don't support deep copying image data
-	// So we'll make sure image data is deleted here
-	if (sprite.surface != NULL) {
-		SDL_DestroyTexture(sprite.surface);
-		fprintf(stderr, "Warning: Copying Sprite object is not supported\n");
-		textures_count-=1;
-	}
-	sprite.surface = NULL;
 }
 
 Sprite& Sprite::operator=(const Sprite& other) {
 	local_frame = other.local_frame;
+	sprite = other.sprite;
 	src = other.src;
 	offset = other.offset;
 	dest = other.dest;
-
-	// Warning: Some graphics APIs don't support deep copying image data
-	// So we'll make sure image data is deleted here
-	if (sprite.surface != NULL) {
-		SDL_DestroyTexture(sprite.surface);
-		fprintf(stderr, "Warning: Assignment operator for Sprite object is not supported\n");
-		textures_count-=1;
-	}
-	sprite.surface = NULL;
 
 	return *this;
 }
 
 Sprite::~Sprite() {
-	if (sprite.surface != NULL) {
-		SDL_DestroyTexture(sprite.surface);
-		textures_count-=1;
-		sprite.surface = NULL;
-	}
 }
 
 /**
@@ -108,7 +87,6 @@ bool Sprite::graphicsIsNull() {
  * graphics resources.
  */
 void Sprite::clearGraphics() {
-
 	if (sprite.surface != NULL) {
 		SDL_DestroyTexture(sprite.surface);
 		textures_count-=1;
