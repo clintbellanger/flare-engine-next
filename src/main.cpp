@@ -30,7 +30,6 @@ using namespace std;
 #include "GameSwitcher.h"
 #include "SharedResources.h"
 #include "UtilsFileSystem.h"
-#include "SDLRenderDevice.h"
 
 GameSwitcher *gswitch;
 
@@ -84,7 +83,11 @@ static void init() {
 	loadMiscSettings();
 
 	// Create render Device and Rendering Context.
+#ifdef USE_SDL2
+	render_device = new SDL2RenderDevice();
+#else
 	render_device = new SDLRenderDevice();
+#endif
 	int status = render_device->createContext(VIEW_W, VIEW_H);
 
 	if (status == -1) {

@@ -31,6 +31,11 @@ FLARE.  If not, see http://www.gnu.org/licenses/
 #include <SDL.h>
 #include <SDL_image.h>
 #include <SDL_mixer.h>
+
+#ifdef USE_SDL2
+#include "SDL2RenderDevice.h"
+#else
 #include "SDLRenderDevice.h"
+#endif
 
 #endif
